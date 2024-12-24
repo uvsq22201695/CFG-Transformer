@@ -1,0 +1,6 @@
+S0 : A1B1C1 | A1C1B1 | B1A1C1 | B1C1A1 | C1A1B1 | C1B1A1
+A1 : a
+B1 : b
+C1 : c
+
+# Langage générant toutes les combinaisons de "a", "b", et "c".

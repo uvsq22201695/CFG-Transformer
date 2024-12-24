@@ -28,8 +28,11 @@ def main():
     mots = grammaire_obj.generer_mots(args.longueur)
 
     # 3) Afficher les mots
-    for mot in mots:
-        print(mot)
+    if len(mots) == 0:
+        print("Aucun mot reconnu par la grammaire.")
+    else:
+        for mot in mots:
+            print(mot)
 
 if __name__ == "__main__":
     main()

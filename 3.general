@@ -1,0 +1,5 @@
+S0 : A1S0B1 | E
+A1 : a
+B1 : b
+
+# Langage générant des chaînes de "a" et "b" imbriquées, avec possibilité d'alternances.

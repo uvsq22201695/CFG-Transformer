@@ -809,7 +809,7 @@ class Grammaire:
         :return: Liste de mots générés par la grammaire.
         """
         if self.axiome is None:
-            raise ValueError("La grammaire ne possède pas d'axiome défini.")
+            return []
 
         mots_generes = set()
 
@@ -821,14 +821,14 @@ class Grammaire:
             :param mot_actuel: Mot en cours de construction.
             :param profondeur: Profondeur actuelle de la récursion pour limiter les appels excessifs.
             """
-            # Si la profondeur ou la longueur du mot dépasse la limite, arrêter
-            if profondeur > longueur or len(mot_actuel) > longueur:
+            # Stopper la récursion si la profondeur ou la longueur dépasse la limite
+            if profondeur > 2 * longueur or len(mot_actuel) > longueur:
                 return
 
             # Si la production est vide et le mot est complet, ajouter aux résultats
             if not production_symboles:
-                if all(sym[0] == "TERMINAL" for sym in mot_actuel):
-                    mots_generes.add("".join(sym[1] for sym in mot_actuel))
+                if len(mot_actuel) <= longueur:
+                    mots_generes.add("".join(mot_actuel))
                 return
 
             # Traiter le premier symbole de la production
@@ -837,13 +837,13 @@ class Grammaire:
 
             if symbole[0] == "TERMINAL":
                 # Ajouter le terminal au mot et continuer avec le reste
-                explorer(reste, mot_actuel + [symbole], profondeur)
+                explorer(reste, mot_actuel + [symbole[1]], profondeur)
             elif symbole[0] == "NON_TERMINAL":
                 # Explorer toutes les productions associées au non-terminal
                 for prod in self.regles_de_production.get(symbole[1], []):
                     explorer(prod + reste, mot_actuel, profondeur + 1)
             elif symbole[0] == "EPSILON":
-                # Si EPSILON, ignorer ce symbole et continuer avec le reste
+                # Ignorer EPSILON et continuer avec le reste sans affecter longueur ou profondeur
                 explorer(reste, mot_actuel, profondeur)
 
         # Lancer l'exploration à partir des productions de l'axiome
