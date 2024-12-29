@@ -84,17 +84,22 @@ class Grammaire:
          – DEL : Suppression des Epsilons-productions (productions générant des chaînes vides).
          – UNIT : Remplacement des règles unitaires de type X → Y par leurs expansions.
          – SUPPRIMER_RECURSIVITE_GAUCHE : Élimination de toute récursivité gauche.
+         - DEL (encore une fois) : Suppression des Epsilons-productions (productions générant des chaînes vides).
          – TERM : Gestion des terminaux dans les productions (approche spécifique pour la GNF).
+         – UNIT (encore une fois) : Remplacement des règles unitaires de type X → Y par leurs expansions.
          – DÉCOMPOSER_LONGUES_PRODUCTIONS : Transformation des productions longues en successions intermédiaires.
 
         La GNF garantit que chaque production commence par un terminal, suivi éventuellement de non-terminaux.
         """
+        # Phase préliminaire : supprimer les Epsilons-productions et les règles unitaires
         self._supprimer_productions_epsilon()  # DEL
         self._eliminer_regles_unitaires()  # UNIT
+
+        # Étapes spécifiques à la GNF
         self._eliminer_recursivite_gauche()  # SUPPRIMER_RECURSIVITE_GAUCHE
         self._supprimer_productions_epsilon()  # DEL (encore une fois)
         self._remplacer_terminaux_dans_productions(greibach=True)  # TERM
-        self._eliminer_regles_unitaires()  # UNIT
+        self._eliminer_regles_unitaires()  # UNIT (encore une fois)
         self._segmenter_productions_complexes()  # DÉCOMPOSER_LONGUES_PRODUCTIONS
 
     # Méthodes privées pour les transformations en CNF et GNF
