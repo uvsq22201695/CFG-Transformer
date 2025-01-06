@@ -35,14 +35,12 @@ test:
 # Nettoyage des fichiers générés
 clean:
 	rm -f *.chomsky *.greibach
-	rm -f *_$${N}_chomsky.res *_$${N}_greibach.res
+	rm -f *_chomsky.res *_greibach.res
 
 # Informations d'aide
 help:
 	@echo "Commandes disponibles :"
-	@echo "  make            - Génère les fichiers .chomsky et .greibach"
-	@echo "  make test       - Teste la génération des mots pour une longueur donnée (par défaut 4)"
-	@echo "  make clean      - Supprime les fichiers générés"
+	@echo "  make                   - Génère les fichiers .chomsky et .greibach"
 	@echo "  make N=<longueur> test - Spécifie la longueur des mots à générer (ex : make N=5 test)"
-	@echo "  make clean N=<longueur> - Supprime les fichiers générés pour une longueur donnée"
-	@echo "  make help       - Affiche ce message d'aide"o
+	@echo "  make clean             - Supprime les fichiers générés"
+	@echo "  make help              - Affiche ce message d'aide"o
