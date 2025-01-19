@@ -279,7 +279,7 @@ Cette méthode introduit d’abord un nouvel axiome (étape \emph{START}), puis 
 \bigskip
 
 \textbf{2) \texttt{convertir\_en\_forme\_normale\_de\_Greibach() (GNF)}}.\\
-Pour atteindre la GNF, la méthode élimine d’abord toute récursivité gauche (directe ou indirecte), puis introduit un nouvel axiome (similaire à \emph{START} en CNF). Ensuite, elle supprime les \(\epsilon\)-productions (étape \emph{DEL}) et enlève les règles unitaires (\emph{UNIT}). Enfin, elle assure que chaque production commence par un terminal : la procédure  \texttt{\_supprimer\allowbreak\_non\allowbreak\_terminaux\allowbreak\_en\allowbreak\_tete\allowbreak\_des\allowbreak\_regles()} \emph{“déplie”} tout non-terminal placé au début d’une règle, et la procédure \texttt{\_supprimer\_symboles\_terminaux\_non\_en\_tete()} remplace tout terminal placé après le premier symbole par un nouveau non-terminal dédié (ex. \texttt{T\_b -> b}). Ainsi, toutes les règles prennent la forme \(\,A \to a\,A_1\,\dots\,A_k\) (ou \(\epsilon\) si l’axiome peut être vide).
+Pour atteindre la GNF, la méthode introduit d'abord un nouvel axiome (similaire à \emph{START} en CNF). Ensuite, elle supprime les \(\epsilon\)-productions (étape \emph{DEL}) et enlève les règles unitaires (\emph{UNIT}). Puis elle élimine toute récursivité gauche (directe ou indirecte). Enfin, elle assure que chaque production commence par un terminal : la procédure  \texttt{\_supprimer\allowbreak\_non\allowbreak\_terminaux\allowbreak\_en\allowbreak\_tete\allowbreak\_des\allowbreak\_regles()} \emph{“déplie”} tout non-terminal placé au début d’une règle, et la procédure \texttt{\_supprimer\_symboles\_terminaux\_non\_en\_tete()} remplace tout terminal placé après le premier symbole par un nouveau non-terminal dédié (ex. \texttt{T\_b -> b}). Ainsi, toutes les règles prennent la forme \(\,A \to a\,A_1\,\dots\,A_k\) (ou \(\epsilon\) si l’axiome peut être vide).
 
 \paragraph{Méthodes internes (privées) :}
 \begin{itemize}
@@ -340,10 +340,10 @@ où \(a\) est un terminal, et chaque \(X_i\) est un non-terminal. En plus, on au
 
 Notre méthode \texttt{convertir\_en\_forme\_normale\_de\_Greibach()} procède ainsi :
 \begin{enumerate}
-    \item \textbf{Élimination de la récursivité gauche} (directe et indirecte).
     \item \textbf{START} : introduction d’un nouvel axiome \texttt{S'}.
     \item \textbf{DEL} : suppression des \(\epsilon\)-productions (sauf si l’axiome est nullable).
     \item \textbf{UNIT} : élimination des règles unitaires X→YX→Y.
+    \item \textbf{Élimination de la récursivité gauche} (directe et indirecte).
     \item\textbf{SUPPRIMER\_NON\_TERMINAUX\_EN\_TÊTE} : forcer chaque règle à débuter par un terminal.
     \item \textbf{SUPPRIMER\_TERMINAUX\_NON\_EN\_TÊTE} : remplacer tout terminal situé après le premier symbole par un non-terminal dédié.
 \end{enumerate}
