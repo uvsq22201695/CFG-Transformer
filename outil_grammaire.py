@@ -81,26 +81,22 @@ class Grammaire:
         """
         Transforme la grammaire en Forme Normale de Greibach (GNF).
         Étapes réalisées dans cet ordre :
-         – SUPPRIMER_RECURSIVITE_GAUCHE : Élimination de toute récursivité gauche.
          – START : Introduction d'un nouvel axiome.
          – DEL : Suppression des Epsilons-productions (productions générant des chaînes vides).
          – UNIT : Remplacement des règles unitaires de type X → Y par leurs expansions.
+         – SUPPRIMER_RECURSIVITE_GAUCHE : Élimination de toute récursivité gauche.
          – SUPPRIMER_NON_TERMINAUX_EN_TETE : Suppression des non-terminaux en tête des règles.
          – SUPPRIMER_TERMINAUX_NON_EN_TETE : Suppression des symboles terminaux non en tête des règles.
 
         La GNF garantit que chaque production commence par un terminal, suivi éventuellement de non-terminaux.
         """
 
-        self._eliminer_recursivite_gauche()  # SUPPRIMER_RECURSIVITE_GAUCHE
-
         self._introduire_axiome_depart()  # START
         self._supprimer_productions_epsilon()  # DEL
         self._eliminer_regles_unitaires()  # UNIT
+        self._eliminer_recursivite_gauche()  # SUPPRIMER_RECURSIVITE_GAUCHE
         self._supprimer_non_terminaux_en_tete_des_regles()  # SUPPRIMER_NON_TERMINAUX_EN_TETE
         self._supprimer_symboles_terminaux_non_en_tete()  # SUPPRIMER_TERMINAUX_NON_EN_TETE
-
-        # POST-TRAITEMENT
-        self._post_traiter_epsilon_terminal()
 
 
     # Méthodes privées pour les transformations en CNF et GNF
@@ -459,43 +455,6 @@ class Grammaire:
         # Si on n'a trouvé aucune production nullable, on renvoie False
         return False
 
-    def _post_traiter_epsilon_terminal(self) -> None:
-        """
-        Si une production commence par (EPSILON,'E'), suivi d'un NON_TERMINAL,
-        on traite cela comme s'il y avait 'NON_TERMINAL' en tête
-        (car l'epsilon devant ne fait qu'ignorer).
-        On réitère jusqu'à ce que plus aucune règle ne commence par (EPSILON,'E'), (NON_TERMINAL, X).
-        """
-        modif = True
-        while modif:
-            modif = False
-            nouvelles_regles = {}
-
-            for nt, liste_prods in self.regles_de_production.items():
-                new_prods_nt = []
-                for prod in liste_prods:
-                    if len(prod) >= 2 and prod[0][0] == 'EPSILON' and prod[1][0] == 'NON_TERMINAL':
-                        # Cas E + Y + ...
-                        y = prod[1][1]  # le nom du non-terminal
-                        alpha = prod[2:]  # la suite
-                        for p_y in self.regles_de_production.get(y, []):
-                            new_prods_nt.append(p_y + alpha)
-                        modif = True
-
-                        # S'il s'agit de l'axiome et qu'on veut quand même E tout seul
-                        # on ajoute [("EPSILON","E")] si pas déjà
-                        if nt == self.axiome and not any(p == [("EPSILON", "E")] for p in new_prods_nt):
-                            new_prods_nt.append([("EPSILON", "E")])
-                    else:
-                        # Sinon on recopie
-                        new_prods_nt.append(prod)
-
-                nouvelles_regles[nt] = new_prods_nt
-
-            self.regles_de_production = nouvelles_regles
-
-        self.nettoyer_grammaire()
-
     def _eliminer_regles_unitaires(self) -> None:
         """
         Supprime les règles unitaires, c'est-à-dire celles de la forme X -> Y,
@@ -787,52 +746,6 @@ class Grammaire:
         # On réassigne
         self.regles_de_production[Ai] = nouvelles_prod_ai
         self.regles_de_production[new_nt] = nouvelles_prod_aiprime
-
-    # def _segmenter_productions_complexes(self) -> None:
-    #     """
-    #     Décompose les longues productions contenant plus de deux symboles
-    #     (non-terminaux ou terminaux) en une suite de productions intermédiaires.
-    #
-    #     Exemple :
-    #     S -> A B C devient :
-    #     S -> A Z1, Z1 -> B C
-    #     """
-    #
-    #     # Nouveau dictionnaire pour stocker les règles modifiées
-    #     nouvelles_regles = {}
-    #
-    #     # On parcourt les règles actuelles pour chercher les longues productions
-    #     for non_terminal, productions in self.regles_de_production.items():
-    #         nouvelles_productions = []  # Règles pour ce non-terminal
-    #
-    #         for production in productions:
-    #             # Si la production a plus de 2 symboles
-    #             if len(production) >= 2:
-    #                 # Extraire le premier symbole de la production
-    #                 premier_symbole = production[0]
-    #
-    #                 # Rechercher ses règles dans le dictionnaire
-    #                 if premier_symbole[0] == "NON_TERMINAL":
-    #                     premier_symbole = premier_symbole[1]
-    #                     regles_premier_symbole = self.regles_de_production.get(premier_symbole, [])
-    #
-    #                     # On crée les combinaisons possibles
-    #                     for regle_premier_symbole in regles_premier_symbole:
-    #                         # On ajoute la combinaison à la production
-    #                         nouvelle_production = regle_premier_symbole + production[1:]
-    #                         nouvelles_productions.append(nouvelle_production)
-    #                 else:
-    #                     # Si le premier symbole est un terminal, on le conserve tel quel
-    #                     nouvelles_productions.append(production)
-    #             else:
-    #                 # Si la production a 1 ou 0 symbole, on la conserve telle quelle
-    #                 nouvelles_productions.append(production)
-    #
-    #         # Mettre à jour les règles pour ce non-terminal
-    #         nouvelles_regles[non_terminal] = nouvelles_productions
-    #
-    #     # Fusionner avec les nouvelles règles créées
-    #     self.regles_de_production.update(nouvelles_regles)
 
     # Nettoyage de la grammaire
     def nettoyer_grammaire(self) -> None:
