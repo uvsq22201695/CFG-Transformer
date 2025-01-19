@@ -99,6 +99,9 @@ class Grammaire:
         self._supprimer_non_terminaux_en_tete_des_regles()  # SUPPRIMER_NON_TERMINAUX_EN_TETE
         self._supprimer_symboles_terminaux_non_en_tete()  # SUPPRIMER_TERMINAUX_NON_EN_TETE
 
+        # POST-TRAITEMENT
+        self._post_traiter_epsilon_terminal()
+
 
     # Méthodes privées pour les transformations en CNF et GNF
     def _introduire_axiome_depart(self) -> None:
@@ -447,7 +450,7 @@ class Grammaire:
             # Sinon, si tous les symboles d'une production sont des non-terminaux annulables,
             # alors le non-terminal est nullable.
             # (ex: A -> B C, B et C étant annulables => A annulable)
-            if all(
+            if all( (sym[0] == 'EPSILON') or
                     (sym[0] == 'NON_TERMINAL' and self._est_nullable(sym[1], nouveau_en_cours))
                     for sym in production
             ):
@@ -455,6 +458,43 @@ class Grammaire:
 
         # Si on n'a trouvé aucune production nullable, on renvoie False
         return False
+
+    def _post_traiter_epsilon_terminal(self) -> None:
+        """
+        Si une production commence par (EPSILON,'E'), suivi d'un NON_TERMINAL,
+        on traite cela comme s'il y avait 'NON_TERMINAL' en tête
+        (car l'epsilon devant ne fait qu'ignorer).
+        On réitère jusqu'à ce que plus aucune règle ne commence par (EPSILON,'E'), (NON_TERMINAL, X).
+        """
+        modif = True
+        while modif:
+            modif = False
+            nouvelles_regles = {}
+
+            for nt, liste_prods in self.regles_de_production.items():
+                new_prods_nt = []
+                for prod in liste_prods:
+                    if len(prod) >= 2 and prod[0][0] == 'EPSILON' and prod[1][0] == 'NON_TERMINAL':
+                        # Cas E + Y + ...
+                        y = prod[1][1]  # le nom du non-terminal
+                        alpha = prod[2:]  # la suite
+                        for p_y in self.regles_de_production.get(y, []):
+                            new_prods_nt.append(p_y + alpha)
+                        modif = True
+
+                        # S'il s'agit de l'axiome et qu'on veut quand même E tout seul
+                        # on ajoute [("EPSILON","E")] si pas déjà
+                        if nt == self.axiome and not any(p == [("EPSILON", "E")] for p in new_prods_nt):
+                            new_prods_nt.append([("EPSILON", "E")])
+                    else:
+                        # Sinon on recopie
+                        new_prods_nt.append(prod)
+
+                nouvelles_regles[nt] = new_prods_nt
+
+            self.regles_de_production = nouvelles_regles
+
+        self.nettoyer_grammaire()
 
     def _eliminer_regles_unitaires(self) -> None:
         """
