@@ -268,21 +268,31 @@ Cette séparation rend le code modulaire et facilite l’utilisation en ligne de
 
 La classe \texttt{Grammaire}, déjà décrite à la section \ref{subsec:classe-grammaire}, propose des méthodes de transformation (\texttt{CNF}/\texttt{GNF}) et un mécanisme de nettoyage. Nous rappelons seulement qu’elle manipule l’Axiome (\texttt{self.axiome}), l’ensemble de Non-Terminaux (\texttt{self.non\_terminaux}) et les règles de production (\texttt{self.regles\_de\_production}). 
 
-\paragraph{Transformations principales :}
-\begin{itemize}
-    \item \texttt{convertir\_en\_forme\_normale\_de\_Chomsky()} (\texttt{CNF}) : introduit un nouvel Axiome si besoin, remplace les Terminaux isolés, binarise les productions, supprime les \texttt{EPSILON} et élimine les règles unitaires.
-    \item \texttt{convertir\_en\_forme\_normale\_de\_Greibach()} (\texttt{GNF}) : supprime les \texttt{EPSILON}, élimine les règles unitaires, gère la récursivité gauche, re-supprime \texttt{EPSILON} si nécessaire, introduit des Terminaux en tête de règle et segmente les productions longues.
-\end{itemize}
+\paragraph{Transformations principales.}
+Deux méthodes publiques permettent de convertir la grammaire dans différentes formes normales :
+
+\medskip
+
+\textbf{1) \texttt{convertir\_en\_forme\_normale\_de\_Chomsky() (CNF)}}.\\
+Cette méthode introduit d’abord un nouvel axiome (étape \emph{START}), puis remplace les terminaux dans les productions de longueur supérieure à 1 (étape \emph{TERM}), avant de binariser les productions (\emph{BIN}). Ensuite, elle supprime les productions \(\epsilon\) si nécessaire (\emph{DEL}) et élimine les règles unitaires (\emph{UNIT}). Au terme de ces étapes, la grammaire respecte la définition de la CNF : les productions sont soit de la forme \(\;A \to BC\), soit \(\;A \to a\), soit \(\;S \to \epsilon\) si l’axiome est nullable.
+
+\bigskip
+
+\textbf{2) \texttt{convertir\_en\_forme\_normale\_de\_Greibach() (GNF)}}.\\
+Pour atteindre la GNF, la méthode élimine d’abord toute récursivité gauche (directe ou indirecte), puis introduit un nouvel axiome (similaire à \emph{START} en CNF). Ensuite, elle supprime les \(\epsilon\)-productions (étape \emph{DEL}) et enlève les règles unitaires (\emph{UNIT}). Enfin, elle assure que chaque production commence par un terminal : la procédure  \texttt{\_supprimer\allowbreak\_non\allowbreak\_terminaux\allowbreak\_en\allowbreak\_tete\allowbreak\_des\allowbreak\_regles()} \emph{“déplie”} tout non-terminal placé au début d’une règle, et la procédure \texttt{\_supprimer\_symboles\_terminaux\_non\_en\_tete()} remplace tout terminal placé après le premier symbole par un nouveau non-terminal dédié (ex. \texttt{T\_b -> b}). Ainsi, toutes les règles prennent la forme \(\,A \to a\,A_1\,\dots\,A_k\) (ou \(\epsilon\) si l’axiome peut être vide).
 
 \paragraph{Méthodes internes (privées) :}
 \begin{itemize}
     \item \texttt{\_introduire\_axiome\_depart()} : crée un nouveau Non-Terminal pour pointer vers l’ancien Axiome.
-    \item \texttt{\_remplacer\_terminaux\_dans\_productions(...)} : déplace les \texttt{TERMINAL} vers des règles dédiées (\texttt{T\_a -> a}) pour la \texttt{CNF} ou \texttt{GNF}.
+    \item \texttt{\_remplacer\_terminaux\_dans\_productions(...)} : déplace les \texttt{TERMINAL} vers des règles dédiées (ex. \texttt{T\_a -> a}) pour la \texttt{CNF} ou la \texttt{GNF}.
     \item \texttt{\_binariser\_productions()} : découpe toute production de plus de deux symboles en productions binaires (ex. \texttt{S -> A X}, \texttt{X -> B C}).
     \item \texttt{\_supprimer\_productions\_epsilon()} : identifie les Non-Terminaux \emph{annulables} (\texttt{EPSILON}) et supprime les règles vides, sauf si l’Axiome est concerné.
     \item \texttt{\_eliminer\_regles\_unitaires()} : remplace \texttt{X -> Y} (un seul Non-Terminal) par les productions de \texttt{Y}.
     \item \texttt{\_eliminer\_recursivite\_gauche()} : gère la récursivité gauche directe (\texttt{A -> A ...}) et indirecte (\texttt{A -> B, B -> A}).
+    \item \texttt{\_supprimer\_non\_terminaux\_en\_tete\_des\_regles()} : pour chaque production \texttt{X -> Y} $\alpha$ (avec \texttt{Y} un \texttt{NON\_TERMINAL}), remplace \texttt{X -> Y} $\alpha$ par \texttt{X -> (p)} $\alpha$ pour chacune des productions \texttt{p} de \texttt{Y},  jusqu’à ce qu’aucune règle ne commence plus par un \texttt{NON\_TERMINAL}.
+    \item \texttt{\_supprimer\_symboles\_terminaux\_non\_en\_tete()} : transforme tout \texttt{TERMINAL} (au-delà du premier symbole) en un nouveau \texttt{NON\_TERMINAL} dédié (ex. \texttt{T\_b -> b}). Ainsi, chaque production commence par un \texttt{TERMINAL}, et les symboles suivants sont uniquement des \texttt{NON\_TERMINAL}.
 \end{itemize}
+
 
 \paragraph{Nettoyage (\texttt{nettoyer\_grammaire()}) :}
 La classe \texttt{Grammaire} inclut aussi des fonctions pour supprimer les Non-Terminaux inaccessibles, vides ou non-productifs :  
@@ -330,16 +340,15 @@ où \(a\) est un terminal, et chaque \(X_i\) est un non-terminal. En plus, on au
 
 Notre méthode \texttt{convertir\_en\_forme\_normale\_de\_Greibach()} procède ainsi :
 \begin{enumerate}
-    \item \textbf{DEL (préliminaire)} : on supprime les \(\epsilon\)-productions (comme pour la CNF), sauf éventuellement pour l’axiome.  
-    \item \textbf{UNIT (préliminaire)} : on élimine les règles unitaires \(A \to B\).  
-    \item \textbf{SUPPRIMER\_RECURSIVITE\_GAUCHE} : on élimine la récursivité gauche directe et indirecte, c’est-à-dire on transforme les règles de la forme \(A \to A\alpha\) ou \(A \to B\), \(B \to A\), etc., afin d’éviter qu’un non-terminal ne se réécrive par lui-même en tête.  
-    \item \textbf{DEL (encore une fois)} : il se peut que la phase précédente ait introduit de nouvelles \(\epsilon\)-productions, on les élimine à nouveau si nécessaire.  
-    \item \textbf{TERM} : on veille à ce que chaque production commence par un terminal. Si ce n’est pas le cas (ex. \(\ldots \to B \ldots\)), on remplace \(B\) par un terminal dédié ou on réinjecte les règles qui conduisent à un terminal.  
-    \item \textbf{UNIT (encore une fois)} : on vérifie à nouveau l’absence de règles unitaires, car l’étape TERM peut en créer.  
-    \item \textbf{DÉCOMPOSER\_LONGUES\_PRODUCTIONS} : enfin, si une production contient plus de deux symboles après le terminal (ex. \(A \to a B C\)), on segmente en plusieurs étapes (\(A \to a X\), \(X \to B C\)) pour s’approcher du schéma « un terminal suivi de quelques non-terminaux ».  
+    \item \textbf{Élimination de la récursivité gauche} (directe et indirecte).
+    \item \textbf{START} : introduction d’un nouvel axiome \texttt{S'}.
+    \item \textbf{DEL} : suppression des \(\epsilon\)-productions (sauf si l’axiome est nullable).
+    \item \textbf{UNIT} : élimination des règles unitaires X→YX→Y.
+    \item\textbf{SUPPRIMER\_NON\_TERMINAUX\_EN\_TÊTE} : forcer chaque règle à débuter par un terminal.
+    \item \textbf{SUPPRIMER\_TERMINAUX\_NON\_EN\_TÊTE} : remplacer tout terminal situé après le premier symbole par un non-terminal dédié.
 \end{enumerate}
 
-Ainsi, chaque règle débute par un unique terminal. Toute éventuelle récursivité gauche a été éliminée. La GNF a l’avantage de faciliter certaines preuves (ex. temps de reconnaissance linéaire dans les automates à pile, etc.) et de simplifier l’algorithme d’analyse descendante.
+Ainsi, chaque règle débute par un unique terminal. Toute éventuelle récursivité gauche a été éliminée.
 
 \subsection{Lecture et écriture de la grammaire : \texttt{lire} et \texttt{ecrire}}
 \label{subsec:lire-ecrire}
@@ -392,7 +401,7 @@ Cette commande affiche tous les mots de longueur \(\leq 3\) produits par la gram
 \subsection{Fichiers de test (\texttt{test.general})}
 \label{subsec:tests}
 
-Deux fichiers de test ont été préparés, nommés \texttt{1.general} et \texttt{2.general}, correspondant à différentes grammaires. Les grammaires sont les suivantes :
+En plus des fichiers requis ( \texttt{3.general}, \texttt{4.general} et \texttt{5.general}), deux fichiers de test ont été préparés, nommés \texttt{1.general} et \texttt{2.general}, et correspondant à différentes grammaires.
 
 \begin{table}[h!]
 \centering
@@ -418,7 +427,7 @@ B1 : b}
 \caption{Récapitulatif des fichiers de test \texttt{.general} et des langages correspondants.}
 \label{tab:recap-general}
 \end{table}
-\pagebreak 
+
 Ces différents fichiers permettent de tester le \textbf{pipeline complet} (lecture, transformation, génération de mots) sur des grammaires variées, incluant des langages vides, des combinaisons de lettres, ou des palindromes.
 
 \subsection{Conclusion}
@@ -492,7 +501,6 @@ python grammaire.py <fichier.general>
 
     \item \textbf{\texttt{make N=<longueur> test}} : Teste la génération de mots à partir de chaque fichier \texttt{.chomsky} et \texttt{.greibach}, pour une longueur de mots \textbf{obligatoirement spécifiée} par \texttt{N=<longueur>}.  
     Par exemple, \texttt{make N=5 test} indiquera de générer des mots de longueur 5. Il appelle en interne :
-\pagebreak 
 \begin{lstlisting}[language=bash, caption={Extrait de Makefile pour la cible `test`}, label={lst:make-test}]
 python generer.py <longueur> <fichier.chomsky> > base_<longueur>_chomsky.res
 python generer.py <longueur> <fichier.greibach> > base_<longueur>_greibach.res
